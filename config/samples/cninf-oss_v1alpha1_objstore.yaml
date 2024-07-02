@@ -1,0 +1,10 @@
+apiVersion: cninf-oss.oss.fjj.com/v1alpha1
+kind: ObjStore
+metadata:
+  labels:
+    app.kubernetes.io/name: oss-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: fjj-01
+spec:
+  name: fjj-oss-001
+  locked: false
