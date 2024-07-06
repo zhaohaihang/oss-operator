@@ -18,6 +18,7 @@ package main
 
 import (
 	"crypto/tls"
+	"errors"
 	"flag"
 	"os"
 
@@ -34,6 +35,7 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
+	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 	cninfossv1alpha1 "github.com/zhaohaihang/oss-operator/api/v1alpha1"
 	"github.com/zhaohaihang/oss-operator/internal/controller"
 	// +kubebuilder:scaffold:imports
@@ -123,9 +125,34 @@ func main() {
 		os.Exit(1)
 	}
 
+	id,ok := os.LookupEnv("ACCESSKEY_ID")
+	if !ok {
+		setupLog.Error(errors.New("load ACCESSKEY_ID failed"),"unable load env")
+		os.Exit(2)
+	}
+
+	secret,ok := os.LookupEnv("ACCESSKEY_SECRET")
+	if !ok {
+		setupLog.Error(errors.New("load ACCESSKEY_SECRET failed"),"unable load env")
+		os.Exit(2)
+	}
+
+	endpoint,ok := os.LookupEnv("OSS_ENDPOINT")
+	if !ok {
+		setupLog.Error(errors.New("load OSS_ENDPOINT failed"),"unable load env")
+		os.Exit(2)
+	}
+	
+	client ,err := oss.New(endpoint,id,secret)
+	if err != nil  {
+		setupLog.Error(errors.New("创建oss client 失败"),"无法创建oss客户端")
+	}
+
+
 	if err = (&controller.ObjStoreReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
+		OssSvc: client,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ObjStore")
 		os.Exit(1)
